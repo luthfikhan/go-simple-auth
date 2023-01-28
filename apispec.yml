@@ -1,0 +1,349 @@
+openapi: '3.0.2'
+info:
+  title: Auth API
+  version: '1.0'
+servers:
+  - url: http://localhost:8080
+paths:
+  /auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: Register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthPayload'
+      responses:
+        '200':
+          description: OK
+          content:
+            otp-validation:
+              schema:
+                $ref: '#/components/schemas/WebResponseAuthId'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+  /auth/otp:
+    get:
+      tags:
+        - Auth
+      summary: resend otp
+      parameters:
+        - name: Authorization
+          in: header
+          description: access token
+          required: false
+          schema:
+            type: string
+        - name: auth_id
+          in: query
+          description: auth id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponseAuthId'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+    post:
+      tags:
+        - Auth
+      summary: OTP Validation
+      parameters:
+        - name: Authorization
+          in: header
+          description: Optional ( access token )
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                otp:
+                  type: string
+                  description: otp
+                auth_id:
+                  type: string
+                  description: auth id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponseToken'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+  /auth/signin:
+    post:
+      tags:
+        - Auth
+      summary: Login
+      parameters:
+        - name: x-tokenid
+          in: cookie
+          description: direct login if cookie is exist. you can set cookie name in config env
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthPayload'
+      responses:
+        '200':
+          description: OK
+          content:
+            direct-login:
+              schema:
+                $ref: '#/components/schemas/WebResponseToken'
+            otp-validation:
+              schema:
+                $ref: '#/components/schemas/WebResponseAuthId'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+  /auth/refresh-token:
+    post:
+      tags:
+        - Auth
+      summary: Refresh token
+      parameters:
+        - name: Authorization
+          in: header
+          description: access token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: refresh token
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponseToken'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+  /auth/logout:
+    delete:
+      tags:
+        - Auth
+      summary: Logout
+      parameters:
+        - name: Authorization
+          in: header
+          description: access token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+  /auth/password:
+    post:
+      tags:
+        - Auth
+      summary: Forgot password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: user email
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponseAuthId'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+    put:
+      tags:
+        - Auth
+      summary: Change password
+      parameters:
+        - name: Authorization
+          in: header
+          description: required if change password flow
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          change password flow:
+            schema:
+              type: object
+              properties:
+                old_password:
+                  type: string
+                  description: old password
+                new_password:
+                  type: string
+                  description: new password
+          forgot password flow:
+            schema:
+              type: object
+              properties:
+                auth_id:
+                  type: string
+                  description: auth id otp
+                new_password:
+                  type: string
+                  description: new password
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponseAuthId'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+  /auth/email:
+    put:
+      tags:
+        - Auth
+      summary: Change email
+      parameters:
+        - name: Authorization
+          in: header
+          description: access token
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: new email
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponseAuthId'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebResponse'
+components:
+  schemas:
+    Token:
+      type: object
+      description: JWT token
+      properties:
+        access_token:
+          type: string
+          description: Access token
+        refresh_token:
+          type: string
+          description: Refresh token
+    AuthPayload:
+      type: object
+      description: Auth payload
+      properties:
+        email:
+          type: string
+          description: email
+        password:
+          type: string
+          description: Password
+    WebResponse: # Generic response
+      properties:
+        code:
+          type: integer
+          description: Response code
+        message:
+          type: string
+          description: Response message
+    WebResponseToken:
+      properties:
+        code:
+          type: integer
+          description: Response code
+        message:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/Token'
+    WebResponseAuthId:
+      properties:
+        code:
+          type: integer
+          description: Response code
+        message:
+          type: string
+          description: Response message
+        data:
+          type: object
+          properties:
+            auth_id:
+              type: string
+              description: token to validate otp
